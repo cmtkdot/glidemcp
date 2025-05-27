@@ -1,5 +1,7 @@
 # mcp/api-gateway
 
+[![Build](https://github.com/rflpazini/mcp-api-gateway/actions/workflows/build.yml/badge.svg)](https://github.com/rflpazini/mcp-api-gateway/actions/workflows/build.yml)
+
 A universal MCP (Model Context Protocol) server to integrate any API with Claude Desktop using only Docker configurations.
 
 ## Quick Installation
