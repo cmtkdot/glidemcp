@@ -19,7 +19,7 @@ Add to your `claude_desktop_config.json`:
         "-e", "API_1_SWAGGER_URL=https://api.example.com/swagger.json",
         "-e", "API_1_BASE_URL=https://api.example.com/v1",
         "-e", "API_1_HEADER_AUTHORIZATION=Bearer YOUR_TOKEN",
-        "yourusername/mcp-api-gateway:latest"
+        "rflpazini/mcp-api-gateway:latest"
       ]
     }
   }
@@ -30,7 +30,7 @@ Add to your `claude_desktop_config.json`:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/mcp-api-gateway
+git clone https://github.com/rflpazini/mcp-api-gateway
 cd mcp-api-gateway
 
 # Build the image
