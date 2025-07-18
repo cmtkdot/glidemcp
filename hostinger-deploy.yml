@@ -8,13 +8,13 @@ services:
     working_dir: /app
     command: >
       sh -c "
-      apk add --no-cache git curl &&
+      apk add --no-cache git curl wget &&
       git clone https://github.com/cmtkdot/glidemcp.git . &&
       npm install &&
       node index.js
       "
     ports:
-      - "8080:3000"
+      - "8080:3000"  # External port 8080 maps to internal port 3000
     environment:
       - NODE_ENV=production
       - PORT=3000
