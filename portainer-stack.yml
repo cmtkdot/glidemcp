@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  glide-api-gateway:
+    image: glide-api-gateway:latest
+    container_name: glide-api-gateway
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Glide API Configuration
+      - GLIDE_API_KEY=bcc7a00b-6919-47e1-8724-30999251a866
+      - GLIDE_APP_ID=KyQIgjT4O1JsARXgkzsv
+      # API Gateway Configuration
+      - API_1_NAME=glide-api-v1
+      - API_1_SWAGGER_URL=file:///app/glide-api-v1-openapi.json
+      - API_1_BASE_URL=https://api.glideapp.io/api/function
+      - API_1_HEADER_AUTHORIZATION=Bearer bcc7a00b-6919-47e1-8724-30999251a866
+      - API_1_HEADER_CONTENT_TYPE=application/json
+      # Security
+      - CORS_ORIGIN=*
+      - RATE_LIMIT_WINDOW=15
+      - RATE_LIMIT_MAX=100
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.glide-api.rule=Host(`glide-api.yourdomain.com`)"
+      - "traefik.http.routers.glide-api.entrypoints=websecure"
+      - "traefik.http.routers.glide-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.glide-api.loadbalancer.server.port=3000"
+    networks:
+      - glide-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Nginx reverse proxy if not using Traefik
+  nginx:
+    image: nginx:alpine
+    container_name: glide-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - nginx_conf:/etc/nginx/nginx.conf:ro
+      - ssl_certs:/etc/nginx/ssl:ro
+    depends_on:
+      - glide-api-gateway
+    networks:
+      - glide-network
+
+networks:
+  glide-network:
+    driver: bridge
+
+volumes:
+  nginx_conf:
+  ssl_certs:

@@ -1,0 +1,191 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Glide API v1",
+    "version": "1.0.0",
+    "description": "Glide API v1 function-based endpoints"
+  },
+  "servers": [
+    {
+      "url": "https://api.glideapp.io/api/function",
+      "description": "Glide API v1 Functions"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Bearer token authentication"
+      }
+    },
+    "schemas": {
+      "QueryRequest": {
+        "type": "object",
+        "properties": {
+          "appID": {
+            "type": "string",
+            "description": "Glide app ID"
+          },
+          "queries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tableName": {
+                  "type": "string",
+                  "description": "Name of the table to query"
+                },
+                "startAt": {
+                  "type": "string",
+                  "description": "Continuation token for pagination"
+                },
+                "utc": {
+                  "type": "boolean",
+                  "description": "Use UTC timezone"
+                }
+              },
+              "required": ["tableName"]
+            }
+          }
+        },
+        "required": ["appID", "queries"]
+      },
+      "MutateRequest": {
+        "type": "object",
+        "properties": {
+          "appID": {
+            "type": "string",
+            "description": "Glide app ID"
+          },
+          "mutations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": ["add-row-to-table", "set-columns-in-row", "delete-row"],
+                  "description": "Type of mutation"
+                },
+                "tableName": {
+                  "type": "string",
+                  "description": "Name of the table to mutate"
+                },
+                "columnValues": {
+                  "type": "object",
+                  "description": "Column values for add/update operations",
+                  "additionalProperties": true
+                },
+                "rowID": {
+                  "type": "string",
+                  "description": "Row ID for update/delete operations"
+                },
+                "rowIndex": {
+                  "type": "number",
+                  "description": "Row index for Google Sheets (zero-based)"
+                }
+              },
+              "required": ["kind", "tableName"]
+            }
+          }
+        },
+        "required": ["appID", "mutations"]
+      }
+    }
+  },
+  "paths": {
+    "/queryTables": {
+      "post": {
+        "summary": "Query tables to get rows",
+        "description": "Requires Business plan or above. Returns max 10,000 rows per call.",
+        "operationId": "queryTables",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query results with pagination",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "rows": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": true
+                        }
+                      },
+                      "next": {
+                        "type": "string",
+                        "description": "Continuation token for next page"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mutateTables": {
+      "post": {
+        "summary": "Mutate tables (add, update, delete rows)",
+        "description": "Add, update, or delete rows. Max 500 mutations per call. Processed asynchronously.",
+        "operationId": "mutateTables",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MutateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mutation results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "description": "Error message if mutation failed"
+                      },
+                      "Row ID": {
+                        "type": "string",
+                        "description": "Row ID for successful add operations"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

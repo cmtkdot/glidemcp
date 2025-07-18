@@ -6,6 +6,10 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import SwaggerParser from '@apidevtools/swagger-parser';
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 class APIGatewayMCPServer {
   constructor() {

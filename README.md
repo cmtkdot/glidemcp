@@ -1,232 +1,278 @@
-# mcp/api-gateway
+# Glide API Gateway
 
-[![Build](https://github.com/rflpazini/mcp-api-gateway/actions/workflows/build.yml/badge.svg)](https://github.com/rflpazini/mcp-api-gateway/actions/workflows/build.yml)
+🚀 **Universal MCP Server for Glide API Integration**
 
-A universal MCP (Model Context Protocol) server to integrate any API with Claude Desktop using only Docker configurations.
+A production-ready API Gateway that bridges Glide Apps with the Model Context Protocol (MCP), enabling seamless integration with Claude Desktop, n8n, Supabase, and other automation tools.
 
-## Quick Installation
+## ✨ Features
 
-### 1. Using Docker Hub (Recommended)
+- **🔌 Universal API Gateway**: Convert any OpenAPI spec to MCP tools
+- **🎯 Glide API V1 Support**: Full support for Glide's function-based API
+- **🐳 Docker Ready**: Production-ready containerization
+- **🔄 n8n Integration**: Direct HTTP endpoints for workflow automation
+- **🗄️ Supabase Compatible**: Real-time data synchronization
+- **🔒 Security First**: Rate limiting, CORS, and environment-based config
+- **📊 Monitoring**: Built-in health checks and logging
+- **🔧 Flexible**: Support for multiple APIs simultaneously
 
-Add to your `claude_desktop_config.json`:
+## 🚀 Quick Start
 
-```json
-{
-  "mcpServers": {
-    "my-api": {
-      "command": "docker",
-      "args": [
-        "run", "--rm", "-i", "--pull", "always",
-        "-e", "API_1_NAME=my-api",
-        "-e", "API_1_SWAGGER_URL=https://api.example.com/swagger.json",
-        "-e", "API_1_BASE_URL=https://api.example.com/v1",
-        "-e", "API_1_HEADER_AUTHORIZATION=Bearer YOUR_TOKEN",
-        "rflpazini/mcp-api-gateway:latest"
-      ]
-    }
-  }
-}
-```
-
-### 2. Local Build
+### Local Development
 
 ```bash
 # Clone the repository
-git clone https://github.com/rflpazini/mcp-api-gateway
-cd mcp-api-gateway
+git clone https://github.com/yourusername/glide-api-gateway.git
+cd glide-api-gateway
 
-# Build the image
-docker build -t mcp-api-gateway .
+# Install dependencies
+npm install
 
-# Local test
-docker run --rm -it \
-  -e API_1_NAME=test \
-  -e API_1_SWAGGER_URL=https://petstore.swagger.io/v2/swagger.json \
-  -e API_1_BASE_URL=https://petstore.swagger.io/v2 \
-  mcp-api-gateway
+# Configure environment
+cp .env.production .env
+# Edit .env with your API keys
+
+# Start MCP server (for Claude Desktop)
+npm start
+
+# Start HTTP server (for n8n/Supabase)
+npm run start:http
 ```
 
-## API Configuration
+### Docker Deployment
+
+```bash
+# Build and run with Docker
+docker build -t glide-api-gateway .
+docker run -p 3000:3000 --env-file .env.production glide-api-gateway
+
+# Or use Docker Compose
+docker-compose up -d
+```
+
+### Hostinger Portainer Deployment
+
+1. Copy contents of `portainer-stack.yml`
+2. Create new stack in Portainer
+3. Update environment variables
+4. Deploy stack
+
+## 📋 Configuration
 
 ### Environment Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `API_N_NAME` | Unique API name | Yes |
-| `API_N_SWAGGER_URL` | Swagger/OpenAPI file URL | Yes |
-| `API_N_BASE_URL` | API base URL (overrides Swagger) | No |
-| `API_N_HEADER_*` | Custom headers | No |
-| `API_N_HEADERS` | JSON with multiple headers | No |
+```env
+# Glide API Configuration
+GLIDE_API_KEY=your-api-key
+GLIDE_APP_ID=your-app-id
 
-### Configuration Examples
+# API Gateway Configuration
+API_1_NAME=glide-api-v1
+API_1_SWAGGER_URL=file:///app/glide-api-v1-openapi.json
+API_1_BASE_URL=https://api.glideapp.io/api/function
+API_1_HEADER_AUTHORIZATION=Bearer your-api-key
 
-#### Simple API with Authentication
+# Security
+CORS_ORIGIN=*
+RATE_LIMIT_WINDOW=15
+RATE_LIMIT_MAX=100
+```
+
+### Claude Desktop Integration
+
+Add to your Claude Desktop MCP configuration:
+
 ```json
 {
   "mcpServers": {
-    "github-api": {
+    "glide-api-gateway": {
       "command": "docker",
       "args": [
         "run", "--rm", "-i",
-        "-e", "API_1_NAME=github",
-        "-e", "API_1_SWAGGER_URL=https://api.github.com/swagger.json",
-        "-e", "API_1_HEADER_AUTHORIZATION=token ghp_xxxxxxxxxxxx",
-        "mcp-api-gateway:latest"
+        "--env-file", "/path/to/.env",
+        "glide-api-gateway"
       ]
     }
   }
 }
 ```
 
-#### Multiple APIs
-```json
-{
-  "mcpServers": {
-    "company-apis": {
-      "command": "docker",
-      "args": [
-        "run", "--rm", "-i",
-        // Users API
-        "-e", "API_1_NAME=users",
-        "-e", "API_1_SWAGGER_URL=https://api.company.com/users/swagger.json",
-        "-e", "API_1_HEADER_X_API_KEY=users_key_123",
-        
-        // Products API  
-        "-e", "API_2_NAME=products",
-        "-e", "API_2_SWAGGER_URL=https://api.company.com/products/openapi.yaml",
-        "-e", "API_2_HEADER_AUTHORIZATION=Bearer products_token",
-        
-        // Orders API (with multiple headers)
-        "-e", "API_3_NAME=orders",
-        "-e", "API_3_SWAGGER_URL=https://api.company.com/orders/spec.json",
-        "-e", "API_3_HEADERS={\"Authorization\":\"Bearer token\",\"X-Tenant\":\"company123\"}",
-        
-        "mcp-api-gateway:latest"
+## 🔧 API Endpoints
+
+### MCP Protocol (Claude Desktop)
+- **stdio**: Direct MCP communication via Docker
+
+### HTTP API (n8n, Supabase, etc.)
+- `GET /health` - Health check
+- `GET /tools` - List available tools
+- `POST /tools/:toolName` - Execute specific tool
+- `POST /api/execute` - Generic API execution
+- `POST /mcp` - MCP protocol over HTTP
+
+### Glide-Specific Endpoints
+- `POST /api/glide/queryTables` - Query Glide tables
+- `POST /api/glide/mutateTables` - Mutate Glide tables
+
+## 🎯 Usage Examples
+
+### Query Glide Tables
+
+```bash
+curl -X POST http://localhost:3000/api/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_name": "glide-api-v1",
+    "method": "POST",
+    "path": "/queryTables",
+    "data": {
+      "appID": "your-app-id",
+      "queries": [
+        {
+          "tableName": "your-table-name",
+          "utc": true
+        }
       ]
     }
-  }
-}
+  }'
 ```
 
-## Using in Claude
-
-### Available Commands
-
-1. **View available APIs**
-   - "What APIs are configured?"
-   - "Show me the available endpoints"
-
-2. **Explore endpoints**
-   - "How do I create a user?"
-   - "What parameters do I need to search for products?"
-
-3. **Execute operations**
-   - "Create a user named John with email john@email.com"
-   - "List all orders from today"
-   - "Update product ID 123 with new price $99.90"
-
-### Conversation Examples
-
-**You**: "Create a new customer named Mary Smith"
-
-**Claude**: "I'll create the customer for you. Using the customers API..."
-```json
-{
-  "id": "12345",
-  "name": "Mary Smith",
-  "createdAt": "2024-01-15T10:30:00Z"
-}
-```
-"Customer Mary Smith created successfully! ID: 12345"
-
-## Publishing to Docker Hub
+### Add Row to Glide Table
 
 ```bash
-# Build for multiple architectures
-docker buildx create --use
-docker buildx build --platform linux/amd64,linux/arm64 \
-  -t your-username/mcp-api-gateway:latest \
-  -t your-username/mcp-api-gateway:1.0.0 \
-  --push .
+curl -X POST http://localhost:3000/api/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "api_name": "glide-api-v1",
+    "method": "POST",
+    "path": "/mutateTables",
+    "data": {
+      "appID": "your-app-id",
+      "mutations": [
+        {
+          "kind": "add-row-to-table",
+          "tableName": "your-table-name",
+          "columnValues": {
+            "Name": "New Order",
+            "Date": "2024-01-15T00:00:00.000Z"
+          }
+        }
+      ]
+    }
+  }'
 ```
 
-## Use Cases
+## 🔗 Integration Guides
 
-### 1. Internal Company API
-```json
-"-e", "API_1_NAME=erp",
-"-e", "API_1_SWAGGER_URL=https://erp.company.local/api/swagger.json",
-"-e", "API_1_BASE_URL=https://erp.company.local/api",
-"-e", "API_1_HEADER_X_COMPANY_ID=company123",
-"-e", "API_1_HEADER_AUTHORIZATION=Bearer internal_token"
+- **[n8n Integration](docs/N8N_INTEGRATION.md)** - Complete guide for n8n workflows
+- **[Supabase Integration](docs/SUPABASE_INTEGRATION.md)** - Database sync and real-time updates
+- **[Deployment Guide](DEPLOYMENT.md)** - Production deployment instructions
+
+## 🛠️ Development
+
+### Project Structure
+
+```
+glide-api-gateway/
+├── index.js                 # MCP server (Claude Desktop)
+├── http-server.js           # HTTP server (n8n, Supabase)
+├── glide-api-v1-openapi.json # OpenAPI specification
+├── docker-compose.yml       # Docker Compose config
+├── portainer-stack.yml      # Portainer stack config
+├── docs/                    # Documentation
+│   ├── N8N_INTEGRATION.md
+│   └── SUPABASE_INTEGRATION.md
+└── README.md
 ```
 
-### 2. API with Local Swagger
-```json
-// Mount local Swagger file
-"-v", "/path/to/swagger.yaml:/swagger.yaml",
-"-e", "API_1_NAME=local-api",
-"-e", "API_1_SWAGGER_URL=file:///swagger.yaml",
-"-e", "API_1_BASE_URL=http://localhost:3000"
-```
+### Adding New APIs
 
-### 3. GraphQL API (via REST wrapper)
-```json
-"-e", "API_1_NAME=graphql",
-"-e", "API_1_SWAGGER_URL=https://api.example.com/graphql-swagger.json",
-"-e", "API_1_BASE_URL=https://api.example.com/graphql"
-```
+1. Create OpenAPI specification file
+2. Add environment variables:
+   ```env
+   API_2_NAME=new-api
+   API_2_SWAGGER_URL=file:///app/new-api-spec.json
+   API_2_BASE_URL=https://api.example.com
+   API_2_HEADER_AUTHORIZATION=Bearer your-token
+   ```
+3. Restart the server
 
-## Security
+### Testing
 
-### Best Practices
-
-1. **Never commit tokens**: Use environment variables or secrets
-2. **Use limited scope tokens**: Only necessary permissions
-3. **Rotate tokens regularly**: Update your tokens periodically
-4. **Always use HTTPS**: Ensure your APIs use HTTPS
-
-### Example with Docker Secrets
 ```bash
-# Create the secret
-echo "your_token_here" | docker secret create api_token -
+# Test MCP protocol
+echo '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}' | \
+  docker run --rm -i --env-file .env glide-api-gateway
 
-# Use in claude_desktop_config.json
-"args": [
-  "run", "--rm", "-i",
-  "-e", "API_1_HEADER_AUTHORIZATION=Bearer $(cat /run/secrets/api_token)",
-  "--secret", "api_token",
-  "mcp-api-gateway:latest"
-]
+# Test HTTP server
+curl http://localhost:3000/health
 ```
 
-## Troubleshooting
+## 🔒 Security
 
-### API not showing up
-- Check if the Swagger URL is accessible
-- Confirm environment variables are correct
-- Check logs: `docker logs <container_id>`
+- **Environment Variables**: All sensitive data in environment variables
+- **Rate Limiting**: Configurable rate limits per IP
+- **CORS**: Configurable cross-origin resource sharing
+- **Docker Security**: Non-root user, minimal attack surface
+- **Input Validation**: Request validation and sanitization
 
-### Authentication error
-- Verify token is correct
-- Confirm header format (Bearer, Basic, etc)
-- Test the API directly first
+## 📊 Monitoring
 
-### Slow performance
-- Use `--pull always` only the first time
-- Consider caching the image locally
-- Check API latency
+### Health Checks
 
-## Contributing
+```bash
+# Docker health check
+docker exec glide-api-gateway curl -f http://localhost:3000/health
 
-PRs are welcome! Some ideas:
+# Manual health check
+curl http://your-domain:3000/health
+```
 
-- [ ] OAuth authentication support
-- [ ] Smart response caching
-- [ ] WebSocket support
-- [ ] Web configuration interface
-- [ ] Metrics and observability
+### Logging
 
-## License
+```bash
+# View logs
+docker logs glide-api-gateway
 
-MIT License - see [LICENSE](https://rflpazini.mit-license.org/) file for details.
+# Follow logs
+docker logs -f glide-api-gateway
+```
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+1. **API not found**: Check environment variables are set correctly
+2. **Rate limiting**: Adjust `RATE_LIMIT_MAX` in environment
+3. **CORS errors**: Configure `CORS_ORIGIN` for your domain
+4. **Connection timeouts**: Check network connectivity to Glide API
+
+### Debug Mode
+
+```bash
+# Run in debug mode
+docker run --rm -it -p 3000:3000 \
+  --env NODE_ENV=development \
+  --env-file .env \
+  glide-api-gateway
+```
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📧 Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/glide-api-gateway/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/glide-api-gateway/discussions)
+- **Documentation**: [Wiki](https://github.com/yourusername/glide-api-gateway/wiki)
+
+## 🏷️ Tags
+
+`mcp` `claude` `glide` `api-gateway` `n8n` `supabase` `docker` `automation` `integration` `openapi`
