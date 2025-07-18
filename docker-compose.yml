@@ -11,34 +11,19 @@ services:
       - "3000:3000"
     env_file:
       - .env.production
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "node", "-e", "const http = require('http'); const options = { hostname: 'localhost', port: 3000, path: '/health', method: 'GET' }; const req = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => { process.exit(1); }); req.end();"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    networks:
-      - glide-network
-
-  # Optional: Add a reverse proxy for SSL termination
-  nginx:
-    image: nginx:alpine
-    container_name: glide-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - glide-api-gateway
-    networks:
-      - glide-network
-
-networks:
-  glide-network:
-    driver: bridge
-
-volumes:
-  ssl_data:
+      - ./glide-api-v1-openapi.json:/app/glide-api-v1-openapi.json:ro
