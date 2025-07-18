@@ -2,11 +2,20 @@ version: '3.8'
 
 services:
   glide-api-gateway:
-    build:
-      context: https://github.com/cmtkdot/glidemcp.git
-      dockerfile: Dockerfile
+    image: node:18-alpine
     container_name: glide-api-gateway
     restart: unless-stopped
+    working_dir: /app
+    command: >
+      sh -c "
+      if [ ! -f package.json ]; then
+        echo 'Cloning repository...'
+        apk add --no-cache git
+        git clone https://github.com/cmtkdot/glidemcp.git .
+        npm install
+      fi
+      node index.js
+      "
     ports:
       - "3000:3000"
     environment:
@@ -25,12 +34,8 @@ services:
       - CORS_ORIGIN=*
       - RATE_LIMIT_WINDOW=15
       - RATE_LIMIT_MAX=100
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.glide-api.rule=Host(`glide-api.yourdomain.com`)"
-      - "traefik.http.routers.glide-api.entrypoints=websecure"
-      - "traefik.http.routers.glide-api.tls.certresolver=letsencrypt"
-      - "traefik.http.services.glide-api.loadbalancer.server.port=3000"
+    volumes:
+      - app_data:/app
     networks:
       - glide-network
     healthcheck:
@@ -38,28 +43,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-
-  # Optional: Nginx reverse proxy if not using Traefik
-  nginx:
-    image: nginx:alpine
-    container_name: glide-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - nginx_conf:/etc/nginx/nginx.conf:ro
-      - ssl_certs:/etc/nginx/ssl:ro
-    depends_on:
-      - glide-api-gateway
-    networks:
-      - glide-network
+      start_period: 60s
 
 networks:
   glide-network:
     driver: bridge
 
 volumes:
-  nginx_conf:
-  ssl_certs:
+  app_data:
